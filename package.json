@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:all": "powershell -NoProfile -ExecutionPolicy Bypass -File ./start.ps1"
   },
   "dependencies": {
     "@vue-flow/core": "^1.46.4",

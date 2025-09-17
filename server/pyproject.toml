@@ -1,0 +1,14 @@
+[project]
+name = "workflow-server"
+version = "0.1.0"
+description = "FastAPI SSE server for Vue Flow demo"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pyyaml",
+]
+
+[tool.uv]
+# can customize if needed
+
