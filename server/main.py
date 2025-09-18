@@ -21,6 +21,7 @@ REGISTRY: dict[str, str] = {
     "ValidateClosestPoint": str(SCRIPTS_DIR / "validate_closest_point.py"),
     "ValidateIsolatedVertex": str(SCRIPTS_DIR / "validate_isolated_vertex.py"),
     "ExtractFBXSimple": str(SCRIPTS_DIR / "extract_fbx_simple.py"),
+    "TestCreateCube": str(SCRIPTS_DIR / "test_create_cube.py"),
 }
 
 app = FastAPI()

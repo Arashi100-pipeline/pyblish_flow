@@ -21,10 +21,18 @@ const okFg = '#ffffff'
 
 // Define the pipeline nodes
 const nodes = ref<Node[]>([
-  { id: '1', type: 'input', label: 'CollectInstances', position: { x: 80, y: 120 }, style: { background: baseNodeBg, color: baseNodeFg } },
-  { id: '2', label: 'ValidateClosestPoint', position: { x: 340, y: 120 }, style: { background: baseNodeBg, color: baseNodeFg } },
-  { id: '3', label: 'ValidateIsolatedVertex', position: { x: 660, y: 120 }, style: { background: baseNodeBg, color: baseNodeFg } },
-  { id: '4', type: 'output', label: 'ExtractFBXSimple', position: { x: 980, y: 120 }, style: { background: baseNodeBg, color: baseNodeFg } },
+  // Group containers
+  { id: 'g-collect', type: 'group', data: { label: 'Collect', collapsed: false }, position: { x: 40, y: 80 }, style: { width: '260px', height: '160px', background: 'transparent' } },
+  { id: 'g-validate', type: 'group', data: { label: 'Validate', collapsed: false }, position: { x: 340, y: 60 }, style: { width: '320px', height: '220px', background: 'transparent' } },
+  { id: 'g-extract', type: 'group', data: { label: 'Extract', collapsed: false }, position: { x: 720, y: 80 }, style: { width: '260px', height: '160px', background: 'transparent' } },
+  { id: 'g-teset', type: 'group', data: { label: 'TesetAction', collapsed: false }, position: { x: 1020, y: 60 }, style: { width: '260px', height: '160px', background: 'transparent' } },
+
+  // Child nodes inside groups
+  { id: '1', type: 'input', label: 'CollectInstances', position: { x: 16, y: 48 }, parentNode: 'g-collect', extent: 'parent', style: { background: baseNodeBg, color: baseNodeFg } },
+  { id: '2', label: 'ValidateClosestPoint', position: { x: 16, y: 48 }, parentNode: 'g-validate', extent: 'parent', style: { background: baseNodeBg, color: baseNodeFg } },
+  { id: '3', label: 'ValidateIsolatedVertex', position: { x: 16, y: 110 }, parentNode: 'g-validate', extent: 'parent', style: { background: baseNodeBg, color: baseNodeFg } },
+  { id: '4', type: 'output', label: 'ExtractFBXSimple', position: { x: 16, y: 48 }, parentNode: 'g-extract', extent: 'parent', style: { background: baseNodeBg, color: baseNodeFg } },
+  { id: '5', label: 'TestCreateCube', position: { x: 16, y: 48 }, parentNode: 'g-teset', extent: 'parent', style: { background: baseNodeBg, color: baseNodeFg } },
 ])
 
 // Start with no edges; user will connect manually
@@ -44,9 +52,15 @@ function sleep(ms: number) {
 function buildAdjacency() {
   const adj: Record<string, string[]> = {}
   const indeg: Record<string, number> = {}
-  for (const n of nodes.value) { adj[n.id] = []; indeg[n.id] = 0 }
+  const groupIds = new Set(nodes.value.filter((n: any) => n.type === 'group').map((n) => n.id))
+  for (const n of nodes.value) {
+    if (groupIds.has(n.id)) continue
+    adj[n.id] = []
+    indeg[n.id] = 0
+  }
   for (const e of edges.value) {
-    (adj[e.source] ||= []).push(e.target)
+    if (groupIds.has(e.source) || groupIds.has(e.target)) continue
+    ;(adj[e.source] ||= []).push(e.target)
     indeg[e.target] = (indeg[e.target] ?? 0) + 1
     if (!(e.source in indeg)) indeg[e.source] = indeg[e.source] ?? 0
   }
@@ -74,10 +88,11 @@ async function runPipeline() {
   isRunning.value = true
 
   // Reset visuals and stop all edge animations
-  nodes.value = nodes.value.map((n) => ({
-    ...n,
-    style: { ...(n.style || {}), background: baseNodeBg, color: baseNodeFg },
-  }))
+  nodes.value = nodes.value.map((n: any) => (
+    n.type === 'group'
+      ? n
+      : { ...n, style: { ...(n.style || {}), background: baseNodeBg, color: baseNodeFg } }
+  ))
   edges.value = edges.value.map((e) => ({ ...e, animated: false }))
 
   // hide panel while running
@@ -199,10 +214,11 @@ function resetPipeline() {
   runId.value++
   isRunning.value = false
   if (esRef.value) { esRef.value.close(); esRef.value = null }
-  nodes.value = nodes.value.map((n) => ({
-    ...n,
-    style: { ...(n.style || {}), background: baseNodeBg, color: baseNodeFg },
-  }))
+  nodes.value = nodes.value.map((n: any) => (
+    n.type === 'group'
+      ? n
+      : { ...n, style: { ...(n.style || {}), background: baseNodeBg, color: baseNodeFg } }
+  ))
   edges.value = edges.value.map((e) => ({ ...e, animated: false }))
 }
 
@@ -232,7 +248,30 @@ function onEdgeClick(payload: any) {
 }
 
 
+function toggleGroup(groupId: string) {
+  const group = nodes.value.find((n) => n.id === groupId)
+  if (!group) return
 
+  const prevCollapsed = (group.data as any)?.collapsed === true
+  const collapsed = !prevCollapsed
+
+  const style = { ...(group.style || {}) } as any
+  const origHeight = (group.data as any)?.origHeight || style.height || '160px'
+
+  if (collapsed) {
+    group.data = { ...(group.data || {}), collapsed: true, origHeight }
+    style.height = '36px'
+  } else {
+    group.data = { ...(group.data || {}), collapsed: false, origHeight }
+    style.height = origHeight
+  }
+  group.style = style
+
+  const hide = collapsed
+  nodes.value
+    .filter((n: any) => n.parentNode === groupId)
+    .forEach((n: any) => { n.hidden = hide })
+}
 
 const onConnect = (params: any) => addEdges([params])
 </script>
@@ -254,7 +293,18 @@ const onConnect = (params: any) => addEdges([params])
       :nodes-connectable="true"
       :connect-on-click="true"
       :connection-mode="ConnectionMode.Loose"
-    />
+    >
+      <template #node-group="{ id, data }">
+        <div class="group">
+          <div class="group-header">
+            <span>{{ data?.label ?? 'Group' }}</span>
+            <button class="group-toggle" @click.stop="toggleGroup(id)">
+              {{ data?.collapsed ? 'Expand' : 'Collapse' }}
+            </button>
+          </div>
+        </div>
+      </template>
+    </VueFlow>
 
     <div class="logs">
       <div class="logs-header">
@@ -315,5 +365,8 @@ const onConnect = (params: any) => addEdges([params])
 .logs { position: fixed; right: 16px; bottom: 16px; width: 420px; padding: 8px; background: #0b1021; color: #c8d3f5; border-radius: 6px; max-height: 40vh; overflow: auto; z-index: 60; box-shadow: 0 4px 14px rgba(0,0,0,.25); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
 .logs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-weight: 600; }
 .logs-body { white-space: pre-wrap; font-size: 12px; line-height: 1.4; }
+.group { width: 100%; height: 100%; background: #f9fafb; overflow: hidden; }
+.group-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; font-weight: 600; background: #f8fafc; border: 1px solid #e5e7eb; }
+.group-toggle { font-size: 12px; padding: 2px 6px; cursor: pointer; background: transparent; border: 1px solid #e5e7eb; }
 </style>
 
