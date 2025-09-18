@@ -48,12 +48,17 @@ async def create_run(request: Request):
     nodes = {str(n.get("id")): n for n in (flow.get("nodes") or [])}
     edges = flow.get("edges") or []
 
-    # simple chain order: follow first outgoing edge starting from indegree==0
-    indeg: dict[str, int] = {nid: 0 for nid in nodes}
-    adj: dict[str, list[str]] = {nid: [] for nid in nodes}
+    # simple chain order over runnable nodes (skip group containers)
+    group_ids = {nid for nid, n in nodes.items() if (n or {}).get("type") == "group"}
+
+    indeg: dict[str, int] = {nid: 0 for nid in nodes if nid not in group_ids}
+    adj: dict[str, list[str]] = {nid: [] for nid in nodes if nid not in group_ids}
+
     for e in edges:
         s = str(e.get("source"))
         t = str(e.get("target"))
+        if s in group_ids or t in group_ids:
+            continue
         if s not in adj:
             adj[s] = []
         adj[s].append(t)

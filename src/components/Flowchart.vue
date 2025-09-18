@@ -368,5 +368,11 @@ const onConnect = (params: any) => addEdges([params])
 .group { width: 100%; height: 100%; background: #f9fafb; overflow: hidden; }
 .group-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; font-weight: 600; background: #f8fafc; border: 1px solid #e5e7eb; }
 .group-toggle { font-size: 12px; padding: 2px 6px; cursor: pointer; background: transparent; border: 1px solid #e5e7eb; }
+  /* Ensure edges render above group containers, but below regular nodes */
+  :deep(.vue-flow__node-group) { z-index: 0 !important; }
+  :deep(.vue-flow__edges) { z-index: 1 !important; }
+  /* Keep group header above edges so the toggle remains clickable */
+  .group-header { position: relative; z-index: 3; }
+
 </style>
 
