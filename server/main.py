@@ -22,6 +22,7 @@ REGISTRY: dict[str, str] = {
     "ValidateIsolatedVertex": str(SCRIPTS_DIR / "validate_isolated_vertex.py"),
     "ExtractFBXSimple": str(SCRIPTS_DIR / "extract_fbx_simple.py"),
     "TestCreateCube": str(SCRIPTS_DIR / "test_create_cube.py"),
+    "TestRunScripts": str(SCRIPTS_DIR / "test_run_scripts.py"),
 }
 
 app = FastAPI()
@@ -113,6 +114,8 @@ async def create_run(request: Request):
                         args += [f"--{name.lower()}", str(index)]
             except Exception:
                 pass
+        elif label == "TestRunScripts":
+            args += ["--script", str((SCRIPTS_DIR / "open_pyblish.py").resolve())]
 
         lines.append(f"  - id: \"{nid}\"")
         lines.append(f"    name: \"{label}\"")
@@ -121,7 +124,7 @@ async def create_run(request: Request):
             # YAML sequence
             lines.append("    args:")
             for a in args:
-                lines.append(f"      - \"{str(a).replace('\\\\', '/')}\"")
+                lines.append(f"      - \"{str(a).replace('\\', '/')}\"")
         else:
             lines.append("    args: []")
 

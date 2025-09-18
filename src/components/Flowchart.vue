@@ -33,6 +33,8 @@ const nodes = ref<Node[]>([
   { id: '3', label: 'ValidateIsolatedVertex', position: { x: 16, y: 110 }, parentNode: 'g-validate', extent: 'parent', style: { background: baseNodeBg, color: baseNodeFg } },
   { id: '4', type: 'output', label: 'ExtractFBXSimple', position: { x: 16, y: 48 }, parentNode: 'g-extract', extent: 'parent', style: { background: baseNodeBg, color: baseNodeFg } },
   { id: '5', label: 'TestCreateCube', position: { x: 16, y: 48 }, parentNode: 'g-teset', extent: 'parent', style: { background: baseNodeBg, color: baseNodeFg } },
+  { id: '6', label: 'TestRunScripts', position: { x: 16, y: 100 }, parentNode: 'g-teset', extent: 'parent', style: { background: baseNodeBg, color: baseNodeFg } },
+
 ])
 
 // Start with no edges; user will connect manually
